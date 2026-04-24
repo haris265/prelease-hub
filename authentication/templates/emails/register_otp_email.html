@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .email-wrapper {
+            width: 100%;
+            background-color: #f4f7f9;
+            padding: 40px 0;
+        }
+        .email-content {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e1e5ea;
+            overflow: hidden;
+        }
+        .header {
+            padding: 40px 20px 20px;
+            text-align: center;
+        }
+        .header img {
+            max-width: 180px;
+            height: auto;
+            display: inline-block;
+        }
+        .divider {
+            height: 1px;
+            background-color: #f0f0f0;
+            margin: 0 40px;
+        }
+        .body {
+            padding: 30px 40px;
+            color: #4a4a4a;
+            line-height: 1.7;
+        }
+        .body p {
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: #333333;
+        }
+        .greeting {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 15px;
+        }
+        .otp-container {
+            text-align: center;
+            margin: 35px 0;
+        }
+        .otp-box {
+            display: inline-block;
+            background-color: #faf5ff;
+            border: 2px dashed #b854f5;
+            padding: 15px 40px;
+            border-radius: 8px;
+        }
+        .otp-code {
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: 10px;
+            color: #1a1a1a;
+            margin: 0;
+        }
+        .warning-text {
+            font-size: 14px !important;
+            color: #718096 !important;
+            margin-top: 30px;
+        }
+        .footer {
+            background-color: #f8fafc;
+            padding: 24px;
+            text-align: center;
+            font-size: 13px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+    <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+            <td align="center">
+                <table class="email-content" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                        {% comment %} <td class="header">
+                            <img src="https://www.signalverified.net/assets/signalverified-logo-DWW533S-.png" alt="SignalVerified Logo">
+                        </td> {% endcomment %}
+                    </tr>
+                    
+                    <tr>
+                        <td>
+                            <div class="divider"></div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="body">
+                            <div class="greeting">Welcome, {{ first_name }}!</div>
+                            <p>Thank you for registering with <strong>ParkClear</strong>. To complete your signup and verify your email address, please use the verification code below:</p>
+                            
+                            <div class="otp-container">
+                                <div class="otp-box">
+                                    <div class="otp-code">{{ otp }}</div>
+                                </div>
+                            </div>
+                            
+                            <p class="warning-text">This code is valid for a limited time. Please do not share it with anyone.</p>
+                            
+                            {% comment %} <p class="warning-text">If you didn't create an account with us, you can safely ignore this email.</p> {% endcomment %}
+                            {% comment %} <p>Best regards,<br><strong>The SignalVerified Team</strong></p> {% endcomment %}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        {% comment %} <td class="footer">
+                            <p>&copy; 2026 SignalVerified. All rights reserved.</p>
+                        </td> {% endcomment %}
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
