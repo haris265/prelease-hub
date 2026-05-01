@@ -128,16 +128,23 @@ class UserSignupSerializer(ModelSerializer):
 class UserLoginSerializer(Serializer):
     """User Login Serializer using Phone Number and Password"""
     
-    phone_no = CharField(required=True)
+    # phone_no = CharField(required=True)
+    email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
+    phone_no = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     password = CharField(required=True, write_only=True)
 
     def validate(self, data):
         """Validate phone number and password"""
+        email = data.get("email")
         phone_no = data.get("phone_no")
         password = data.get("password")
 
         # 1. Fetch the user by phone number
-        user = UserModel.objects.filter(phone_no=phone_no).first()
+        # user = UserModel.objects.filter(phone_no=phone_no).first()
+        if email:
+            user = UserModel.objects.filter(email=email).first()
+        elif phone_no:
+            user = UserModel.objects.filter(phone_no=phone_no).first()
         
         # 2. Check if user exists
         if not user:

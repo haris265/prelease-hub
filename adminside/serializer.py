@@ -11,7 +11,7 @@ from user.models import (
 )
 
 
-class PropertyInquirySerializer(ModelSerializer):
+class BuyerPropertyInquirySerializer(ModelSerializer):
     buyer_name = serializers.CharField(source='buyer.user_name', read_only=True)
     property_name = serializers.CharField(source='property.property_name', read_only=True)
     status = serializers.CharField(source='get_status_display', read_only=True)
