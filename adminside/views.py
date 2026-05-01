@@ -15,8 +15,14 @@ from rest_framework.status import (
 from adminside.serializer import(
     BuyerPropertyInquirySerializer
 )
+from user.serializer import(
+    PropertyDocumentSerializer,
+    PropertyListingSerializer
+)
 from user.models import (
     PropertyInquiryModel,
+    PropertyListingModel,
+    PropertyDocumentModel,
     InquiryStatus
 )
 from authentication.models import UserModel
@@ -218,7 +224,96 @@ class PropertyInquiryViewSet(ModelViewSet):
                 "message": str(swr)
             }, status=HTTP_500_INTERNAL_SERVER_ERROR)
     
+
+class PropertyListingViewSet(ModelViewSet):
+    @action(detail= False,methods= ['POST'],permission_classes=[UserGeneralAuthorization]) 
+    def property_create(self, request):
+        try:
+            user = request.user_instance
+            listing = PropertyListingSerializer(data = request.data)
+            if not listing.is_valid():
+                return Response ({
+                    "status": False,
+                    "message": handle_serializer_exception(listing)
+                    },status=status.HTTP_400_BAD_REQUEST)
+            _ = listing.save(user=user)
+            return Response ({
+                "status": True,
+                "message": "Property created successfully",
+                "data": listing.data
+                },status=status.HTTP_201_CREATED)
+        except Exception as swr:
+            return Response({
+                "status": False, "message": str(swr)
+                },status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
     
+    @action(detail= False,methods= ['GET'],permission_classes=[UserGeneralAuthorization]) 
+    def property_view(self, request):
+        try:
+            user = request.user_instance
+            listings = PropertyListingModel.objects.filter(user=user)
+            serializer = PropertyListingSerializer(listings, many=True)
+            return Response ({
+                "status": True,
+                "message": "Property retrieve successfully",
+                "data": serializer.data
+            })
+        
+        except Exception as swr:
+            return Response(
+                {"status": False, "message": str(swr)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    
+    @action(detail=False, url_path="property_delete/(?P<pk>[0-9a-f-]+)", methods=['DELETE'], permission_classes=[UserGeneralAuthorization])
+    def property_delete(self, request, pk=None):
+        try:
+            listing = PropertyListingModel.objects.filter(id=pk).first()
+            if not listing:
+                return Response({
+                    "status": False, "message": "property not found"
+                    },status=status.HTTP_404_NOT_FOUND)
+            listing.delete()
+            return Response({
+                "status": True,
+                "message": "Property     deleted successfully"
+                },status=status.HTTP_200_OK)
+        except Exception as swr:
+            return Response(
+                {"status": False, "message": str(swr)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    
+    @action(detail=False, methods=['PATCH'], permission_classes=[UserGeneralAuthorization])
+    def property_update(self, request):
+        try:
+            listing_id = request.data.get('id')
+            listing = PropertyListingModel.objects.filter(id=listing_id).first()
+            if not listing:
+                return Response(
+                    {"status": False, "message": "property not found to update it."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            serializer = PropertyListingSerializer(instance=listing, data=request.data, partial=True)
+            if not serializer.is_valid():
+                return Response({
+                    "status": False,
+                    "message": handle_serializer_exception(serializer)
+                },status=status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+            return Response(
+                {   
+                "status": True,
+                "message": "Property updated successfully",
+                "data": serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+        except Exception as swr:
+            return Response(
+                {"status": False, "message": str(swr)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
    
 
 
