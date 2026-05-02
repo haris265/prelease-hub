@@ -13,7 +13,8 @@ from rest_framework.status import (
     HTTP_403_FORBIDDEN
 )
 from adminside.serializer import(
-    BuyerPropertyInquirySerializer
+    BuyerPropertyInquirySerializer,
+    AdminUserSerializer
 )
 from user.serializer import(
     PropertyDocumentSerializer,
@@ -23,7 +24,8 @@ from user.models import (
     PropertyInquiryModel,
     PropertyListingModel,
     PropertyDocumentModel,
-    InquiryStatus
+    InquiryStatus,
+    UserModel
 )
 from authentication.models import UserModel
 
@@ -354,6 +356,118 @@ class DashboardViewSet(ModelViewSet):
                 "status": False, 
                 "message": str(swr)
             }, status=HTTP_500_INTERNAL_SERVER_ERROR)
+
+class AdminUserViewSet(ModelViewSet):
+    @action(detail= False,methods= ['POST'],permission_classes=[UserGeneralAuthorization]) 
+    def user_create(self, request):
+        try:
+            user = request.user_instance
+            user = AdminUserSerializer(data = request.data)
+            if not user.is_valid():
+                return Response ({
+                    "status": False,
+                    "message": handle_serializer_exception(user)
+                    },status=status.HTTP_400_BAD_REQUEST)
+            _ = user.save(user=user)
+            return Response ({
+                "status": True,
+                "message": "User created successfully",
+                "data": user.data
+                },status=status.HTTP_201_CREATED)
+        except Exception as swr:
+            return Response({
+                "status": False, "message": str(swr)
+                },status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+    
+    @action(detail=False, methods=['GET'], permission_classes=[UserGeneralAuthorization]) 
+    def user_view(self, request):
+        try:
+            # 1. Security Check
+            if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
+                return Response(
+                    {"status": False, "message": "Access denied. Only Admin can view users."}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            role_filter = request.query_params.get('role', None)
+
+            users = UserModel.objects.exclude(role=UserModel.Role.SUPER_ADMIN)
+
+            if role_filter is not None:
+                try:
+                    role_filter = int(role_filter)
+                    users = users.filter(role=role_filter)
+                except ValueError:
+                    return Response({
+                        "status": False, 
+                        "message": "Invalid role format. It should be a number."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # 5. Order and Serialize
+            users = users
+            serializer = AdminUserSerializer(users, many=True)
+            
+            return Response({
+                "status": True,
+                "message": "Users retrieve successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as swr:
+            return Response(
+                {"status": False, "message": str(swr)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    
+    @action(detail=False, url_path="user_delete/(?P<pk>[0-9a-f-]+)", methods=['DELETE'], permission_classes=[UserGeneralAuthorization])
+    def user_delete(self, request, pk=None):
+        try:
+            user = UserModel.objects.filter(id=pk).first()
+            if not user:
+                return Response({
+                    "status": False, "message": "user not found"
+                    },status=status.HTTP_404_NOT_FOUND)
+            user.delete()
+            return Response({
+                "status": True,
+                "message": "User deleted successfully"
+                },status=status.HTTP_200_OK)
+        except Exception as swr:
+            return Response(
+                {"status": False, "message": str(swr)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    
+    @action(detail=False, methods=['PATCH'], permission_classes=[UserGeneralAuthorization])
+    def user_update(self, request):
+        try:
+            user_id = request.data.get('id')
+            user = UserModel.objects.filter(id=user_id).first()
+            if not user:
+                return Response(
+                    {"status": False, "message": "user not found to update it."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            serializer = AdminUserSerializer(instance=user, data=request.data, partial=True)
+            if not serializer.is_valid():
+                return Response({
+                    "status": False,
+                    "message": handle_serializer_exception(serializer)
+                },status=status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+            return Response(
+                {   
+                "status": True,
+                "message": "User updated successfully",
+                "data": serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+        except Exception as swr:
+            return Response(
+                {"status": False, "message": str(swr)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
    
 
 

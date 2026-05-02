@@ -7,7 +7,8 @@ from rest_framework.serializers import (
     ValidationError
 )
 from user.models import (
-    PropertyInquiryModel
+    PropertyInquiryModel,
+    UserModel
 )
 
 
@@ -23,6 +24,18 @@ class BuyerPropertyInquirySerializer(ModelSerializer):
             'status', 'meet_link', 'created_at', 'updated_at'
         ]
         read_only_fields = ['buyer', 'status', 'meet_link']
+
+
+class AdminUserSerializer(ModelSerializer):
+    role = CharField(source='get_role_display', read_only=True)
+    class Meta:
+        model = UserModel
+        fields = ['id', 'user_name', 'email', 'phone_no', 'role', 'is_active', 'password']
+        extra_kwargs = {
+            'password': {'write_only': True, 'required': False}, 
+            'email': {'required': True},
+            'phone_no': {'required': True}
+        }
 
 
 
