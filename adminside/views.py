@@ -314,6 +314,46 @@ class PropertyListingViewSet(ModelViewSet):
                 {"status": False, "message": str(swr)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+class DashboardViewSet(ModelViewSet):
+    """
+    API to fetch total counts for the Admin Dashboard.
+    Route: GET /adminside/v1/dashboard/counts/
+    """
+    @action(detail=False, methods=['GET'], permission_classes=[UserGeneralAuthorization])
+    def dashboard_stats(self, request):
+        try:
+            # 1. Admin Authorization Check
+            if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
+                return Response({
+                    "status": False, 
+                    "message": "Access Denied. Only Admin can view dashboard stats."
+                }, status=HTTP_403_FORBIDDEN)
+
+            total_users = UserModel.objects.count() 
+            total_buyers = UserModel.objects.filter(role=UserModel.Role.BUYER).count()
+            total_sellers = UserModel.objects.filter(role=UserModel.Role.SELLER).count()
+            total_lessees = UserModel.objects.filter(role=UserModel.Role.LEASER).count()
+            total_properties = PropertyListingModel.objects.count()
+
+            # 4. Return Data
+            return Response({
+                "status": True,
+                "message": "Dashboard stats retrieve successfully.",
+                "data": {
+                    "total_users": total_users,
+                    "total_buyers": total_buyers,
+                    "total_sellers": total_sellers,
+                    "total_lessees": total_lessees,
+                    "total_properties": total_properties
+                }
+            }, status=HTTP_200_OK)
+
+        except Exception as swr:
+            return Response({
+                "status": False, 
+                "message": str(swr)
+            }, status=HTTP_500_INTERNAL_SERVER_ERROR)
    
 
 
