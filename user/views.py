@@ -12,6 +12,9 @@ from rest_framework.status import (
     HTTP_404_NOT_FOUND,
     HTTP_403_FORBIDDEN
 )
+from core.choices import (
+    ListingStatus
+)
 from user.serializer import(
     PropertyListingSerializer,
     PropertyDocumentSerializer,
@@ -51,6 +54,23 @@ class PropertyListingViewSet(ModelViewSet):
         try:
             user = request.user_instance
             listings = PropertyListingModel.objects.filter(user=user)
+            serializer = PropertyListingSerializer(listings, many=True)
+            return Response ({
+                "status": True,
+                "message": "Property retrieve successfully",
+                "data": serializer.data
+            })
+        
+        except Exception as swr:
+            return Response(
+                {"status": False, "message": str(swr)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    
+    @action(detail= False,methods= ['GET']) 
+    def approve_property_view(self, request):
+        try:
+            listings = PropertyListingModel.objects.filter(status=ListingStatus.APPROVED)
             serializer = PropertyListingSerializer(listings, many=True)
             return Response ({
                 "status": True,

@@ -4,7 +4,8 @@ from django.contrib.auth.hashers import make_password
 from core.choices import (
     PropertyType,  
     IntentType,
-    InquiryStatus
+    InquiryStatus,
+    ListingStatus
 )
 from django.core.validators import ( 
     MinValueValidator, 
@@ -33,43 +34,44 @@ class PropertyListingModel(BaseModel):
         blank=True,
         null=True
     )
-    owner_company_name = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=20)
-    email_address = models.EmailField()
     property_name = models.CharField(max_length=255)
-    
-    # Location & Type
+    city = models.CharField(max_length=100)
+    location = models.CharField(max_length=255, blank=True, null=True)
     property_type = models.IntegerField(
         choices=PropertyType.choices,
         # default=PropertyType.HOTEL
     )
-    city = models.CharField(max_length=100)
-    full_address = models.TextField()
-    
-    # Financials & Specs
-    intent = models.IntegerField(
-        choices=IntentType.choices,
-        # default=IntentType.SELL
-    )
-    expected_price_rent = models.DecimalField(max_digits=15, decimal_places=2) 
-    rooms_keys = models.PositiveIntegerField(blank=True,
-        null=True)
-    
-    current_occupancy_percent = models.DecimalField(
-        max_digits=5, 
+    rooms = models.PositiveIntegerField(blank=True,null=True)
+    built_up_area = models.DecimalField(
+        max_digits=12, 
         decimal_places=2, 
-        validators=[MinValueValidator(0), MaxValueValidator(100)],
-        help_text="Percentage from 0 to 100",
-        blank=True,
-        null=True
+        blank=True, 
+        null=True, 
+        help_text="Built-up Area in sq ft"
     )
-    current_monthly_income = models.DecimalField(max_digits=15, decimal_places=2, blank=True,null=True)
+    listing_type = models.IntegerField(
+        choices=IntentType.choices,
+        default=IntentType.SELL
+    )
+    selling_price = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True) 
+    expected_monthly_rent = models.DecimalField(max_digits=15, decimal_places=2, blank=True,null=True)
+    security_deposit = models.DecimalField(max_digits=15, decimal_places=2, blank=True,null=True)
+    annual_rental_income = models.DecimalField(max_digits=15, decimal_places=2, blank=True,null=True)
+    lock_in_period = models.PositiveIntegerField(blank=True,null=True, help_text="Lock-in period in months")
+    owner_company_name = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=20)
+    email_address = models.EmailField()
+    property_description = models.TextField(blank=True, null=True)
+    status = models.IntegerField(
+        choices=ListingStatus.choices,
+        default=ListingStatus.PENDING
+    )
     
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.property_name} ({self.get_intent_display()}) - {self.owner_company_name}"
+        return f"{self.property_name} - {self.owner_company_name}"
     
     class Meta:
         verbose_name = "Property Listing"

@@ -12,6 +12,10 @@ from rest_framework.status import (
     HTTP_404_NOT_FOUND,
     HTTP_403_FORBIDDEN
 )
+from core.choices import (
+    InquiryStatus,
+    ListingStatus
+)
 from adminside.serializer import(
     BuyerPropertyInquirySerializer,
     AdminUserSerializer
@@ -252,8 +256,8 @@ class PropertyListingViewSet(ModelViewSet):
     @action(detail= False,methods= ['GET'],permission_classes=[UserGeneralAuthorization]) 
     def property_view(self, request):
         try:
-            user = request.user_instance
-            listings = PropertyListingModel.objects.filter(user=user)
+            # user = request.user_instance
+            listings = PropertyListingModel.objects.filter()
             serializer = PropertyListingSerializer(listings, many=True)
             return Response ({
                 "status": True,
@@ -316,6 +320,86 @@ class PropertyListingViewSet(ModelViewSet):
                 {"status": False, "message": str(swr)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+    
+    @action(detail=False, methods=['PATCH'], permission_classes=[UserGeneralAuthorization])
+    def update_property_status(self, request):
+        """
+        API for Admin to Approve, Reject, or set Pending status for a Property.
+        Route: PATCH /adminside/v1/property/listing/update_property_status/
+        """
+        try:
+            # 1. Security Check (Only Admin)
+            if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
+                return Response({
+                    "status": False, 
+                    "message": "Access denied. Only Admin can update property status."
+                }, status=HTTP_403_FORBIDDEN)
+
+            # 2. Get ID and Action from body
+            property_id = request.data.get('id')
+            action_type = request.data.get('action') 
+
+            if not property_id:
+                return Response({
+                    "status": False, 
+                    "message": "Property ID ('id') is required."
+                }, status=HTTP_400_BAD_REQUEST)
+
+            if not action_type:
+                return Response({
+                    "status": False, 
+                    "message": "Action is required. Use 'approve', 'reject', or 'pending'."
+                }, status=HTTP_400_BAD_REQUEST)
+
+            # 3. Fetch the Property
+            property_instance = PropertyListingModel.objects.filter(id=property_id).first()
+            
+            if not property_instance:
+                return Response({
+                    "status": False, 
+                    "message": "Property not found."
+                }, status=HTTP_404_NOT_FOUND)
+
+            # 4. Handle Status Actions
+            action_type = action_type.lower().strip()
+
+            if action_type == 'approve':
+                property_instance.status = ListingStatus.APPROVED
+                message = "Property has been approved and is now live."
+                
+            elif action_type == 'reject':
+                property_instance.status = ListingStatus.REJECTED
+                message = "Property has been rejected."
+                
+            elif action_type == 'pending':
+                property_instance.status = ListingStatus.PENDING
+                message = "Property status reverted to pending."
+                
+            else:
+                return Response({
+                    "status": False, 
+                    "message": "Invalid action. Please use 'approve', 'reject', or 'pending'."
+                }, status=HTTP_400_BAD_REQUEST)
+
+            # 5. Save changes
+            property_instance.save()
+
+            return Response({
+                "status": True,
+                "message": message,
+                "data": {
+                    "id": property_instance.id,
+                    "property_name": property_instance.property_name,
+                    "status": property_instance.status,
+                    "status_name": property_instance.get_status_display()
+                }
+            }, status=HTTP_200_OK)
+
+        except Exception as swr:
+            return Response({
+                "status": False, 
+                "message": str(swr)
+            }, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 class DashboardViewSet(ModelViewSet):
     """

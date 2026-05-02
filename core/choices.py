@@ -12,7 +12,7 @@ class PropertyType(models.IntegerChoices):
 class IntentType(models.IntegerChoices):
     SELL = 1, 'Sell'
     LEASE = 2, 'Lease'
-    BOTH = 3, 'Both'
+    PRELEASESSALE = 3, 'Pre-Leased Sale'
 
 
 class InquiryStatus(models.IntegerChoices):
@@ -21,6 +21,12 @@ class InquiryStatus(models.IntegerChoices):
     SELLER_REQUESTED_MEET = 3, 'Seller Requested Meet'
     MEETING_SCHEDULED = 4, 'Meeting Scheduled'
     REJECTED = 5, 'Rejected'
+
+
+class ListingStatus(models.IntegerChoices):
+    PENDING = 1, 'Pending Approval'
+    APPROVED = 2, 'Approved'
+    REJECTED = 3, 'Rejected'
 
 
 

@@ -20,6 +20,7 @@ class PropertyDocumentSerializer(ModelSerializer):
 class PropertyListingSerializer(ModelSerializer):
     # Read-only field to display saved documents
     documents = PropertyDocumentSerializer(many=True, read_only=True)
+    status = serializers.CharField(source='get_status_display', read_only=True)
     
     # Write-only field to accept multiple files during creation
     uploaded_documents = serializers.ListField(
@@ -31,11 +32,27 @@ class PropertyListingSerializer(ModelSerializer):
     class Meta:
         model = PropertyListingModel
         fields = [
-            'id', 'user', 'owner_company_name', 'phone_number', 'email_address',
-            'property_name', 'property_type', 'city', 'full_address',
-            'intent', 'expected_price_rent', 'rooms_keys',
-            'current_occupancy_percent', 'current_monthly_income',
-            'documents', 'uploaded_documents'
+            'id', 
+            'user', 
+            'property_name', 
+            'city', 
+            'location', 
+            'property_type', 
+            'rooms',                
+            'built_up_area', 
+            'listing_type',         
+            'selling_price',        
+            'expected_monthly_rent',
+            'security_deposit',     
+            'annual_rental_income', 
+            'lock_in_period',      
+            'owner_company_name',   
+            'phone_number', 
+            'email_address',
+            'property_description',
+            'status',
+            'documents', 
+            'uploaded_documents'
         ]
 
     def create(self, validated_data):
