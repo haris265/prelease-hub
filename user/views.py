@@ -293,6 +293,64 @@ class PropertyInquiryViewSet(ModelViewSet):
                 "message": str(swr)
             }, status=HTTP_500_INTERNAL_SERVER_ERROR)
     
+    @action(detail=False, methods=['PATCH'], permission_classes=[UserGeneralAuthorization])
+    def seller_request_meeting(self, request):
+        """
+        API for Seller to request Admin to schedule a meeting with the Buyer.
+        Route: PATCH /user/v1/property/inquiry/seller_request_meeting/
+        """
+        try:
+            # 1. Ensure the user is a Seller
+            # if request.user_instance.role != UserModel.Role.SELLER:
+            #     return Response({
+            #         "status": False,
+            #         "message": "Access denied. Only Sellers can request a meeting."
+            #     }, status=HTTP_403_FORBIDDEN)
+
+            # 2. Get Inquiry ID from body
+            inquiry_id = request.data.get('id')
+            if not inquiry_id:
+                return Response({
+                    "status": False, 
+                    "message": "Inquiry ID ('id') is required."
+                }, status=HTTP_400_BAD_REQUEST)
+
+            inquiry = PropertyInquiryModel.objects.filter(
+                id=inquiry_id, 
+                property__user=request.user_instance 
+            ).first()
+
+            if not inquiry:
+                return Response({
+                    "status": False, 
+                    "message": "Inquiry not found or you do not have permission to modify it."
+                }, status=HTTP_404_NOT_FOUND)
+
+            if inquiry.status != InquiryStatus.FORWARDED_TO_SELLER:
+                return Response({
+                    "status": False,
+                    "message": f"You cannot request a meeting at this stage. Current status: {inquiry.get_status_display()}"
+                }, status=HTTP_400_BAD_REQUEST)
+
+            inquiry.status = InquiryStatus.SELLER_REQUESTED_MEET
+            inquiry.save()
+
+            return Response({
+                "status": True,
+                "message": "Meeting request sent to Admin successfully.",
+                "data": {
+                    "id": inquiry.id,
+                    "status": inquiry.status,
+                    "status_name": inquiry.get_status_display()
+                }
+            }, status=HTTP_200_OK)
+
+        except Exception as swr:
+            return Response({
+                "status": False, 
+                "message": str(swr)
+            }, status=HTTP_500_INTERNAL_SERVER_ERROR)
+    
    
 
 
