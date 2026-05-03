@@ -39,8 +39,8 @@ class PropertyInquiryViewSet(ModelViewSet):
     @action(detail=False, methods=['GET'], permission_classes=[UserGeneralAuthorization])
     def all_buyer_inquiries(self, request):
         try:
-            if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
-                return Response({"status": False, "message": "Access denied."}, status=HTTP_403_FORBIDDEN)
+            # if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
+            #     return Response({"status": False, "message": "Access denied."}, status=HTTP_403_FORBIDDEN)
 
             inquiries = PropertyInquiryModel.objects.filter(buyer__role=UserModel.Role.BUYER).order_by('-created_at')
             serializer = BuyerPropertyInquirySerializer(inquiries, many=True)
@@ -56,11 +56,11 @@ class PropertyInquiryViewSet(ModelViewSet):
         """
         try:
             # 1. Check if user is Super Admin
-            if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
-                return Response({
-                    "status": False, 
-                    "message": "Access denied. Only Admin can perform this action."
-                }, status=HTTP_403_FORBIDDEN)
+            # if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
+            #     return Response({
+            #         "status": False, 
+            #         "message": "Access denied. Only Admin can perform this action."
+            #     }, status=HTTP_403_FORBIDDEN)
 
             # 2. Extract ID and action from body
             inquiry_id = request.data.get('id')
@@ -136,8 +136,8 @@ class PropertyInquiryViewSet(ModelViewSet):
     @action(detail=False, methods=['GET'], permission_classes=[UserGeneralAuthorization])
     def all_lessee_inquiries(self, request):
         try:
-            if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
-                return Response({"status": False, "message": "Access denied."}, status=HTTP_403_FORBIDDEN)
+            # if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
+            #     return Response({"status": False, "message": "Access denied."}, status=HTTP_403_FORBIDDEN)
 
             inquiries = PropertyInquiryModel.objects.filter(buyer__role=UserModel.Role.LEASER).order_by('-created_at')
             serializer = BuyerPropertyInquirySerializer(inquiries, many=True)
@@ -153,11 +153,11 @@ class PropertyInquiryViewSet(ModelViewSet):
         """
         try:
             # 1. Check if user is Super Admin
-            if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
-                return Response({
-                    "status": False, 
-                    "message": "Access denied. Only Admin can perform this action."
-                }, status=HTTP_403_FORBIDDEN)
+            # if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
+            #     return Response({
+            #         "status": False, 
+            #         "message": "Access denied. Only Admin can perform this action."
+            #     }, status=HTTP_403_FORBIDDEN)
 
             # 2. Extract ID and action from body
             inquiry_id = request.data.get('id')
@@ -329,11 +329,11 @@ class PropertyListingViewSet(ModelViewSet):
         """
         try:
             # 1. Security Check (Only Admin)
-            if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
-                return Response({
-                    "status": False, 
-                    "message": "Access denied. Only Admin can update property status."
-                }, status=HTTP_403_FORBIDDEN)
+            # if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
+            #     return Response({
+            #         "status": False, 
+            #         "message": "Access denied. Only Admin can update property status."
+            #     }, status=HTTP_403_FORBIDDEN)
 
             # 2. Get ID and Action from body
             property_id = request.data.get('id')
@@ -410,11 +410,11 @@ class DashboardViewSet(ModelViewSet):
     def dashboard_stats(self, request):
         try:
             # 1. Admin Authorization Check
-            if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
-                return Response({
-                    "status": False, 
-                    "message": "Access Denied. Only Admin can view dashboard stats."
-                }, status=HTTP_403_FORBIDDEN)
+            # if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
+            #     return Response({
+            #         "status": False, 
+            #         "message": "Access Denied. Only Admin can view dashboard stats."
+            #     }, status=HTTP_403_FORBIDDEN)
 
             total_users = UserModel.objects.count() 
             total_buyers = UserModel.objects.filter(role=UserModel.Role.BUYER).count()

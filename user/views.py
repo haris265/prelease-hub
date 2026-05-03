@@ -13,12 +13,16 @@ from rest_framework.status import (
     HTTP_403_FORBIDDEN
 )
 from core.choices import (
-    ListingStatus
+    ListingStatus,
+    InquiryStatus
 )
 from user.serializer import(
     PropertyListingSerializer,
     PropertyDocumentSerializer,
     PropertyInquirySerializer
+)
+from adminside.serializer import(
+    BuyerPropertyInquirySerializer
 )
 from user.models import (
     PropertyListingModel,
@@ -133,17 +137,59 @@ class PropertyListingViewSet(ModelViewSet):
                 {"status": False, "message": str(swr)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+    
+    @action(detail=False, methods=['GET']) # Public API
+    def filter_properties(self, request):
+        """
+        Simple GET API for filtering properties based on 4 parameters.
+        Route: GET /api/.../property/listing/filter_properties/
+        """
+        try:
+            queryset = PropertyListingModel.objects.filter(status=ListingStatus.APPROVED)
+
+            location = request.query_params.get('location')
+            property_type = request.query_params.get('property_type')
+            listing_type = request.query_params.get('listing_type')
+            area = request.query_params.get('area')
+
+            if location:
+                queryset = queryset.filter(location__icontains=location)
+            
+            if property_type:
+                queryset = queryset.filter(property_type=property_type)
+            
+            if listing_type:
+                queryset = queryset.filter(listing_type=listing_type)
+            
+            if area:
+                queryset = queryset.filter(built_up_area__gte=area)
+
+            queryset = queryset.order_by('-created_at')
+
+            serializer = PropertyListingSerializer(queryset, many=True)
+            
+            return Response({
+                "status": True,
+                "message": f"{queryset.count()} properties found.",
+                "data": serializer.data
+            }, status=HTTP_200_OK)
+
+        except Exception as swr:
+            return Response({
+                "status": False, 
+                "message": str(swr)
+            }, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 class PropertyInquiryViewSet(ModelViewSet):
     @action(detail=False, methods=['POST'], permission_classes=[UserGeneralAuthorization])
     def inquiry_create(self, request):
         try:
             # Check if user is buyer or leaser
-            if request.user_instance.role not in [UserModel.Role.BUYER, UserModel.Role.LEASER]:
-                return Response({
-                    "status": False,
-                    "message": "Only buyers or leasers can submit property inquiries."
-                }, status=HTTP_403_FORBIDDEN)
+            # if request.user_instance.role not in [UserModel.Role.BUYER, UserModel.Role.LEASER]:
+            #     return Response({
+            #         "status": False,
+            #         "message": "Only buyers or leasers can submit property inquiries."
+            #     }, status=HTTP_403_FORBIDDEN)
 
             serializer = PropertyInquirySerializer(data=request.data)
             if not serializer.is_valid():
@@ -176,11 +222,11 @@ class PropertyInquiryViewSet(ModelViewSet):
         """
         try:
             # Check if user is buyer or leaser
-            if request.user_instance.role not in [UserModel.Role.BUYER, UserModel.Role.LEASER]:
-                return Response({
-                    "status": False,
-                    "message": "Only buyers or leasers can view their inquiries."
-                }, status=HTTP_403_FORBIDDEN)
+            # if request.user_instance.role not in [UserModel.Role.BUYER, UserModel.Role.LEASER]:
+            #     return Response({
+            #         "status": False,
+            #         "message": "Only buyers or leasers can view their inquiries."
+            #     }, status=HTTP_403_FORBIDDEN)
 
             # Filter inquiries where the current user is the buyer
             # order_by('-created_at') se latest request sabse upar aayegi
@@ -192,6 +238,52 @@ class PropertyInquiryViewSet(ModelViewSet):
             return Response({
                 "status": True,
                 "message": "My inquiries retrieve successfully.",
+                "data": serializer.data
+            }, status=HTTP_200_OK)
+
+        except Exception as swr:
+            return Response({
+                "status": False, 
+                "message": str(swr)
+            }, status=HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['GET'], permission_classes=[UserGeneralAuthorization])
+    def seller_received_inquiries(self, request):
+        """
+        API for Seller to view inquiries forwarded by Admin.
+        Route: GET /api/.../inquiries/seller_received_inquiries/
+        """
+        try:
+            # 1. Ensure the user is a Seller
+            # if request.user_instance.role != UserModel.Role.SELLER:
+            #     return Response({
+            #         "status": False,
+            #         "message": "Access denied. Only Sellers can view these inquiries."
+            #     }, status=HTTP_403_FORBIDDEN)
+
+            # 2. Define the statuses that a seller is allowed to see
+            # (Admin se forwarded, Seller ne meet request ki, ya Meeting schedule ho gayi)
+            allowed_statuses = [
+                InquiryStatus.FORWARDED_TO_SELLER,
+                InquiryStatus.SELLER_REQUESTED_MEET,
+                InquiryStatus.MEETING_SCHEDULED
+            ]
+
+            # 3. Filter the inquiries
+            # property__user: Ye check karta hai ke inquiry jis property par hai, uska owner current user ho
+            # status__in: Ye ensure karta hai ke sirf approved requests hi aayen (Pending Admin wali nahi)
+            inquiries = PropertyInquiryModel.objects.filter(
+                property__user=request.user_instance,
+                status__in=allowed_statuses
+            ).order_by('-updated_at')  # Latest updated requests sabse upar
+
+            # 4. Serialize data
+            # Yahan apna main serializer use karein jo aapne query mein define kiya hai
+            serializer = BuyerPropertyInquirySerializer(inquiries, many=True)
+
+            return Response({
+                "status": True,
+                "message": "Forwarded inquiries retrieved successfully for seller.",
                 "data": serializer.data
             }, status=HTTP_200_OK)
 
