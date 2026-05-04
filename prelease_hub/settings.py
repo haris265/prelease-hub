@@ -115,7 +115,8 @@ AUTH_PASSWORD_VALIDATORS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001",
-    "https://preleased-hub.vercel.app"
+    "https://preleased-hub.vercel.app",
+    "https://preleased-hub-admin.vercel.app"
 ]
 
 
