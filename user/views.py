@@ -147,13 +147,13 @@ class PropertyListingViewSet(ModelViewSet):
         try:
             queryset = PropertyListingModel.objects.filter(status=ListingStatus.APPROVED)
 
-            location = request.query_params.get('location')
+            location = request.query_params.get('city')
             property_type = request.query_params.get('property_type')
             listing_type = request.query_params.get('listing_type')
             area = request.query_params.get('area')
 
             if location:
-                queryset = queryset.filter(location__icontains=location)
+                queryset = queryset.filter(city__icontains=location)
             
             if property_type:
                 queryset = queryset.filter(property_type=property_type)
