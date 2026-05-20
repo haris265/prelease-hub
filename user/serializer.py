@@ -18,6 +18,8 @@ class PropertyDocumentSerializer(ModelSerializer):
         fields = ['id', 'document_file']
 
 class PropertyListingSerializer(ModelSerializer):
+    is_featured = serializers.SerializerMethodField()
+    property_description = serializers.SerializerMethodField()
     # Read-only field to display saved documents
     documents = PropertyDocumentSerializer(many=True, read_only=True)
     status = serializers.CharField(source='get_status_display', read_only=True)
@@ -54,6 +56,16 @@ class PropertyListingSerializer(ModelSerializer):
             'documents', 
             'uploaded_documents'
         ]
+    
+    def get_is_featured(self, obj):
+        if obj.property_description and '__FEATURED__' in obj.property_description:
+            return True
+        return False
+
+    def get_property_description(self, obj):
+        if obj.property_description:
+            return obj.property_description.replace('__FEATURED__', '').strip()
+        return obj.property_description
 
     def create(self, validated_data):
         # Extract uploaded files from the data
