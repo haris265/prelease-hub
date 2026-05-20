@@ -88,6 +88,24 @@ class PropertyListingViewSet(ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
     
+
+    @action(detail= False,methods= ['GET']) 
+    def featured_property_view(self, request):
+        try:
+            featured_properties = PropertyListingModel.objects.filter(property_description__icontains="__FEATURED__")
+            serializer = PropertyListingSerializer(featured_properties, many=True)
+            return Response ({
+                "status": True,
+                "message": "Featured property retrieve successfully",
+                "data": serializer.data
+            })
+        
+        except Exception as swr:
+            return Response(
+                {"status": False, "message": str(swr)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    
     @action(detail=False, url_path="property_delete/(?P<pk>[0-9a-f-]+)", methods=['DELETE'], permission_classes=[UserGeneralAuthorization])
     def property_delete(self, request, pk=None):
         try:

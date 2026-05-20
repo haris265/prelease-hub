@@ -400,6 +400,70 @@ class PropertyListingViewSet(ModelViewSet):
                 "status": False, 
                 "message": str(swr)
             }, status=HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+    @action(detail=False, methods=['PATCH'], permission_classes=[UserGeneralAuthorization])
+    def toggle_featured_status(self, request):
+        """
+        API for Admin to add/remove a property from Featured list without altering DB models.
+        Route: PATCH /adminside/v1/property/listing/toggle_featured_status/
+        Payload: {"id": 1, "action": "add"} OR {"id": 1, "action": "remove"}
+        """
+        try:
+            # 1. Security Check (Only Admin)
+            # if request.user_instance.role != UserModel.Role.SUPER_ADMIN:
+            #     return Response({"status": False, "message": "Access denied."}, status=HTTP_403_FORBIDDEN)
+
+            property_id = request.data.get('id')
+            action_type = request.data.get('action') 
+
+            if not property_id:
+                return Response({"status": False, "message": "Property ID is required."}, status=HTTP_400_BAD_REQUEST)
+
+            if not action_type or action_type.lower() not in ['add', 'remove']:
+                return Response({"status": False, "message": "Action must be 'add' or 'remove'."}, status=HTTP_400_BAD_REQUEST)
+
+            # 2. Fetch Property
+            property_instance = PropertyListingModel.objects.filter(id=property_id).first()
+            if not property_instance:
+                return Response({"status": False, "message": "Property not found."}, status=HTTP_404_NOT_FOUND)
+
+            # 3. Handle 'Featured' Tag in Description
+            action_type = action_type.lower().strip()
+            current_desc = property_instance.property_description or ""
+            is_featured = False
+
+            if action_type == 'add':
+                # Agar pehle se featured tag nahi hai, toh add kardo
+                if "__FEATURED__" not in current_desc:
+                    property_instance.property_description = f"{current_desc} __FEATURED__".strip()
+                property_instance.save()
+                message = "Property has been marked as Featured."
+                is_featured = True
+
+            elif action_type == 'remove':
+                # Agar featured tag hai, toh usko remove kardo
+                if "__FEATURED__" in current_desc:
+                    property_instance.property_description = current_desc.replace("__FEATURED__", "").strip()
+                property_instance.save()
+                message = "Property removed from Featured list."
+                is_featured = False
+
+            return Response({
+                "status": True,
+                "message": message,
+                "data": {
+                    "id": property_instance.id,
+                    "property_name": property_instance.property_name,
+                    "is_featured": is_featured
+                }
+            }, status=HTTP_200_OK)
+
+        except Exception as swr:
+            return Response({
+                "status": False, 
+                "message": str(swr)
+            }, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 class DashboardViewSet(ModelViewSet):
     """
